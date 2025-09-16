@@ -1,0 +1,17 @@
+[package]
+name = "brine-bn128-bls-test"
+authors = ["Dean Little <@deanmlittle>", "Zelimir Fedoran <@zelimir__>"]
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+
+[dependencies]
+brine-bn128-bls = { path = "../" }
+pinocchio = "0.6.0"
+
+[dev-dependencies]
+mollusk-svm = "0.0.11"
+solana-sdk = "2.1.0"
