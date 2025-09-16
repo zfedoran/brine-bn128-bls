@@ -1,6 +1,6 @@
-# Solana alt-bn128 BLS (min\_sig & min\_pk)
+# Alt-BN128 BLS
 
-This is a small fork of **Dean Little’s** excellent [`solana-alt-bn128-bls`](https://github.com/deanmlittle/solana-alt-bn128-bls).
+This is a small fork of Dean Little’s excellent [`solana-alt-bn128-bls`](https://github.com/deanmlittle/solana-alt-bn128-bls).
 The only changes here are structural: the library is split into two flavors so you can pick which group carries the public keys vs the signatures.
 
 * **`min_sig/`** — *Public keys in G2, signatures in G1* (the original layout)
@@ -8,7 +8,8 @@ The only changes here are structural: the library is split into two flavors so y
 
 Both variants target BN254 (a.k.a. alt-bn128) and use Solana’s alt-bn128 syscalls where available.
 
-> [!Important] The `min_pk` variant unfortunately doesn't work. The G2 hash-to-curve implementation is broken without G2 syscall support.
+> [!Important]
+> The `min_pk` variant unfortunately doesn't work. The G2 hash-to-curve implementation is broken without G2 syscall support.
 
 ---
 
@@ -36,9 +37,9 @@ Solana currently exposes syscalls for:
 
 ---
 
-## Security & status
+## Security
 
-This is experimental code meant to illustrate how to structure BLS on Solana with either group layout. It has **not** been audited. Use at your own risk.
+This is experimental code. It has **not** been audited. Use at your own risk.
 
 ---
 
