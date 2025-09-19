@@ -5,10 +5,19 @@ use crate::consts::{MODULUS, NORMALIZE_MODULUS};
 use crate::errors::BLSError;
 use crate::g1::G1Point;
 
+// TODO: Consider replacing the try-and-increment decompression routine with a standard IETF
+// hash-to-curve mapping (ExpandMsgXMD with SHA-256, Simplified SWU, RO) for BN254 G1.
+
 pub fn hash_to_curve<T: AsRef<[u8]>>(message: T) -> Result<G1Point, BLSError> {
     (0..255)
         .find_map(|n: u8| {
-            let hash = solana_nostd_sha256::hashv(&[message.as_ref(), &[n]]);
+
+            let hash = solana_nostd_sha256::hashv(&[
+                b"BLS-BN254-RO",
+                message.as_ref(),
+                &[n]
+            ]);
+
             let hash_ubig = UBig::from_be_bytes(&hash);
 
             if hash_ubig >= NORMALIZE_MODULUS {
@@ -23,4 +32,34 @@ pub fn hash_to_curve<T: AsRef<[u8]>>(message: T) -> Result<G1Point, BLSError> {
             }
         })
         .ok_or(BLSError::HashToCurveError)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::hash_to_curve;
+    use crate::g1::{G1CompressedPoint, G1Point};
+
+    #[test]
+    fn hash_to_curve_is_deterministic() {
+        let m = b"hash-determinism";
+        let h1 = hash_to_curve(m).expect("h1");
+        let h2 = hash_to_curve(m).expect("h2");
+        assert_eq!(h1.0, h2.0);
+    }
+
+    #[test]
+    fn hash_to_curve_compress_decompress_roundtrip() {
+        let m = b"hash-roundtrip";
+        let h = hash_to_curve(m).expect("hash");
+        let hc = G1CompressedPoint::try_from(h.clone()).expect("compress");
+        let rt = G1Point::try_from(&hc).expect("decompress");
+        assert_eq!(h.0, rt.0);
+    }
+
+    #[test]
+    fn hash_to_curve_changes_with_message() {
+        let h1 = hash_to_curve(b"m1").expect("h1");
+        let h2 = hash_to_curve(b"m2").expect("h2");
+        assert_ne!(h1.0, h2.0);
+    }
 }

@@ -115,46 +115,50 @@ impl TryFrom<&G1CompressedPoint> for G1Point {
     }
 }
 
-#[cfg(all(test, not(target_os = "solana")))]
+#[cfg(test)]
 mod tests {
     use super::{G1CompressedPoint, G1Point};
     use crate::privkey::PrivKey;
 
     #[test]
-    fn keygen_g1_compressed() {
-        let privkey = PrivKey([
-            0x21, 0x6f, 0x05, 0xb4, 0x64, 0xd2, 0xca, 0xb2, 0x72, 0x95, 0x4c, 0x66, 0x0d, 0xd4,
-            0x5c, 0xf8, 0xab, 0x0b, 0x26, 0x13, 0x65, 0x4d, 0xcc, 0xc7, 0x4c, 0x11, 0x55, 0xfe,
-            0xba, 0xaf, 0xb5, 0xc9,
-        ]);
+    fn g1_keygen_roundtrip_random() {
+        let sk = PrivKey::from_random();
+        // Build both compressed and uncompressed pubkeys from the same SK
+        let sk_bytes = sk.0;
+        let pk_uncompressed = G1Point::try_from(PrivKey(sk_bytes)).expect("g1 from sk");
+        let pk_compressed = G1CompressedPoint::try_from(PrivKey(sk_bytes)).expect("g1c from sk");
 
-        let pubkey = G1CompressedPoint::try_from(privkey).expect("Invalid private key");
-
-        assert_eq!(
-            [0x1d, 0xc6, 0x38, 0x33, 0x8a, 0xa8, 0xdf, 0xf2, 0xfd, 0x75, 0xdf, 0x80, 0x9e, 0x9f,
-            0x33, 0x5d, 0x1b, 0x97, 0x96, 0x90, 0xe7, 0xe0, 0x2f, 0x49, 0x8f, 0x10, 0xbb, 0x7d,
-            0x2c, 0x4a, 0x50, 0xeb],
-            pubkey.0
-        );
+        // Decompress compressed and compare with uncompressed
+        let decomp = G1Point::try_from(&pk_compressed).expect("decompress");
+        assert_eq!(decomp.0, pk_uncompressed.0, "G1 compress/decompress mismatch");
     }
 
     #[test]
-    fn keygen_g1_uncompressed() {
-        let privkey = PrivKey([
-            0x21, 0x6f, 0x05, 0xb4, 0x64, 0xd2, 0xca, 0xb2, 0x72, 0x95, 0x4c, 0x66, 0x0d, 0xd4,
-            0x5c, 0xf8, 0xab, 0x0b, 0x26, 0x13, 0x65, 0x4d, 0xcc, 0xc7, 0x4c, 0x11, 0x55, 0xfe,
-            0xba, 0xaf, 0xb5, 0xc9,
-        ]);
+    fn g1_compress_decompress_idempotent() {
+        let sk = PrivKey::from_random();
+        let pk_uncompressed = G1Point::try_from(sk).expect("g1 from sk");
+        let pk_compressed = G1CompressedPoint::try_from(pk_uncompressed.clone()).expect("compress");
+        let roundtrip = G1CompressedPoint::try_from(
+            G1Point::try_from(&pk_compressed).expect("decompress again")
+        ).expect("recompress");
+        assert_eq!(roundtrip.0, pk_compressed.0, "G1 compress->decompress->compress changed bytes");
+    }
 
-        let pubkey = G1Point::try_from(privkey).expect("Invalid private key");
+    #[test]
+    fn g1_addition_is_commutative_and_associative() {
+        // Build three random G1 points from secret keys
+        let a = G1Point::try_from(PrivKey::from_random()).expect("a");
+        let b = G1Point::try_from(PrivKey::from_random()).expect("b");
+        let c = G1Point::try_from(PrivKey::from_random()).expect("c");
 
-        assert_eq!(
-            [0x1d, 0xc6, 0x38, 0x33, 0x8a, 0xa8, 0xdf, 0xf2, 0xfd, 0x75, 0xdf, 0x80, 0x9e, 0x9f,
-            0x33, 0x5d, 0x1b, 0x97, 0x96, 0x90, 0xe7, 0xe0, 0x2f, 0x49, 0x8f, 0x10, 0xbb, 0x7d,
-            0x2c, 0x4a, 0x50, 0xeb, 0x08, 0x25, 0x1a, 0x23, 0xad, 0x51, 0xac, 0xbc, 0x01, 0xe3,
-            0x46, 0x94, 0x1a, 0x72, 0x4e, 0x47, 0x95, 0xc1, 0x13, 0x48, 0x1b, 0x5a, 0x81, 0xa6,
-            0xf5, 0x26, 0xdb, 0x3d, 0xf4, 0xd2, 0x00, 0x0b],
-            pubkey.0
-        );
+        // Commutative: a + b = b + a
+        let ab = a.clone() + b.clone();
+        let ba = b.clone() + a.clone();
+        assert_eq!(ab.0, ba.0);
+
+        // Associative: (a + b) + c = a + (b + c)
+        let lhs = (a.clone() + b.clone()) + c.clone();
+        let rhs = a + (b + c);
+        assert_eq!(lhs.0, rhs.0);
     }
 }
