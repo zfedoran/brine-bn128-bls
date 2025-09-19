@@ -15,10 +15,10 @@ use solana_bn254::{
 use crate::{errors::BLSError, consts::G2_MINUS_ONE};
 use super::{BLSSignature, HashToCurve};
 
-#[derive(Clone)]
+#[derive(Clone, Copy)]
 pub struct G2Point(pub [u8; 128]);
 
-#[derive(Clone)]
+#[derive(Clone, Copy)]
 pub struct G2CompressedPoint(pub [u8; 64]);
 
 impl G2Point {

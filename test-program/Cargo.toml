@@ -9,6 +9,7 @@ license = "MIT"
 crate-type = ["cdylib", "lib"]
 
 [dependencies]
+solana-bn254 = "2.1.0"
 brine-bn128-bls = { path = "../" }
 pinocchio = "0.6.0"
 
