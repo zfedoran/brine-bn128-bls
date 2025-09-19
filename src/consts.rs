@@ -1,10 +1,7 @@
 use dashu::integer::UBig;
 
-/// # MODULUS
-/// This is the The modulus Fq2
+/// MODULUS: The modulus Fq2
 /// 0x30644e72e131a029b85045b68181585d97816a916871ca8d3c208c16d87cfd47
-///
-/// We use this value to
 pub static MODULUS: UBig = unsafe {
     UBig::from_static_words(&[
         0x3c208c16d87cfd47,
@@ -16,7 +13,6 @@ pub static MODULUS: UBig = unsafe {
 
 /// The last multiple of the modulus before 2^256 used to normalize
 /// hash values for our signing scheme.
-///
 /// 0xf1f5883e65f820d099915c908786b9d3f58714d70a38f4c22ca2bc723a70f263
 pub static NORMALIZE_MODULUS: UBig = unsafe {
     UBig::from_static_words(&[
@@ -49,10 +45,10 @@ pub const G2_MINUS_ONE: [u8; 128] = [
 
 #[cfg(all(test, not(target_os = "solana")))]
 mod tests {
-    use super::G1_MINUS_ONE;
-    use ark_bn254::G1Affine;
-    use ark_serialize::CanonicalSerialize;
+    use super::{G1_MINUS_ONE, G2_MINUS_ONE};
+    use ark_bn254::{G1Affine, G2Affine};
     use ark_ec::AffineRepr;
+    use ark_serialize::CanonicalSerialize;
 
     #[test]
     fn test_g1_minus_one() {
@@ -77,11 +73,6 @@ mod tests {
 
     #[test]
     fn test_g2_minus_one() {
-        use super::G2_MINUS_ONE;
-        use ark_bn254::G2Affine;
-        use ark_serialize::CanonicalSerialize;
-        use ark_ec::AffineRepr;
-
         // Compute negation of G2 generator
         let g2_gen = G2Affine::generator();
         let g2_neg = -g2_gen;
