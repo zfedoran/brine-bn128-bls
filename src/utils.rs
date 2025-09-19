@@ -164,7 +164,7 @@ pub fn verify_fast_aggregate<M: AsRef<[u8]>>(
     // Hash message to G1 once
     let h_g1 = hash_to_curve(message.as_ref())?.0;
 
-    // Build input for pairing precompile:
+    // Build input for pairing:
     // For each signer: pair (H(m), PK_i)
     // Final pair: (S_sum, -G2).
     let mut input = vec![0u8; 192 * (k + 1)];
